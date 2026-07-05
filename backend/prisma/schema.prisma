@@ -1,0 +1,157 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String
+  roleId        String
+  employeeId    String?  @unique
+  status        String   @default("ACTIVE")
+  lastLogin     DateTime?
+  mfaEnabled    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  role          Role     @relation(fields: [roleId], references: [id])
+  employee      Employee? @relation("UserEmployee", fields: [employeeId], references: [id])
+  auditLogs     AuditLog[]
+}
+
+model Role {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  description   String?
+  isSystemRole  Boolean  @default(false)
+  
+  users         User[]
+  permissions   RolePermission[]
+}
+
+model Permission {
+  id        String   @id @default(cuid())
+  resource  String
+  action    String
+  scope     String?
+
+  roles     RolePermission[]
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model Department {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  employees Employee[]
+}
+
+model Designation {
+  id           String     @id @default(cuid())
+  name         String
+  departmentId String?
+  
+  employees    Employee[]
+}
+
+model Employee {
+  id             String    @id @default(cuid())
+  employeeCode   String    @unique
+  firstName      String
+  lastName       String
+  email          String    @unique
+  departmentId   String?
+  designationId  String?
+  managerId      String?
+  doj            DateTime?
+  status         String    @default("ACTIVE")
+
+  department     Department?  @relation(fields: [departmentId], references: [id])
+  designation    Designation? @relation(fields: [designationId], references: [id])
+  manager        Employee?    @relation("ManagerSubordinates", fields: [managerId], references: [id])
+  subordinates   Employee[]   @relation("ManagerSubordinates")
+  user           User?        @relation("UserEmployee")
+  
+  leaveRequests  LeaveRequest[]
+  attendances    Attendance[]
+  eodReports     EodReport[]
+}
+
+model LeaveType {
+  id             String         @id @default(cuid())
+  name           String         @unique
+  defaultBalance Int
+  requests       LeaveRequest[]
+}
+
+model LeaveRequest {
+  id           String    @id @default(cuid())
+  employeeId   String
+  leaveTypeId  String
+  startDate    DateTime
+  endDate      DateTime
+  duration     Int
+  durationType String
+  reason       String
+  status       String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  employee     Employee  @relation(fields: [employeeId], references: [id])
+  leaveType    LeaveType @relation(fields: [leaveTypeId], references: [id])
+}
+
+model Attendance {
+  id           String    @id @default(cuid())
+  employeeId   String
+  date         String    // Storing as YYYY-MM-DD for easy querying in SQLite
+  checkIn      DateTime?
+  checkOut     DateTime?
+  workHours    Float     @default(0)
+  status       String    @default("ABSENT") // PRESENT, ABSENT, HALF_DAY
+  createdAt    DateTime  @default(now())
+
+  employee     Employee  @relation(fields: [employeeId], references: [id])
+
+  @@unique([employeeId, date])
+}
+
+model EodReport {
+  id             String    @id @default(cuid())
+  employeeId     String
+  date           String
+  summary        String
+  completedTasks String
+  workLocation   String    @default("Office")
+  extraHours     Float     @default(0)
+  createdAt      DateTime  @default(now())
+
+  employee       Employee  @relation(fields: [employeeId], references: [id])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  action      String
+  resource    String
+  resourceId  String?
+  before      String?
+  after       String?
+  ip          String?
+  createdAt   DateTime @default(now())
+
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}

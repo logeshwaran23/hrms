@@ -1,0 +1,12 @@
+{
+  "name": "hrms-portal",
+  "private": true,
+  "scripts": {
+    "frontend": "cd client && npm install && npm run dev",
+    "backend": "cd server && npm install && npm run dev",
+    "start": "concurrently \"npm run backend\" \"npm run frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

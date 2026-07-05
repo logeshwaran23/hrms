@@ -1,0 +1,86 @@
+<svg width="250" height="250" viewBox="0 0 250 250" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="leafGreen" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b6b4f"/>
+      <stop offset="100%" stop-color="#0f8b68"/>
+    </linearGradient>
+    <linearGradient id="leafBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d47a1"/>
+      <stop offset="100%" stop-color="#1565c0"/>
+    </linearGradient>
+    <linearGradient id="dGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffd54f"/>
+      <stop offset="50%" stop-color="#ffb300"/>
+      <stop offset="100%" stop-color="#ff9100"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="250" height="250" rx="30" fill="#ffffff"/>
+  <circle cx="125" cy="125" r="110" fill="none" stroke="#e0e0e0" stroke-width="2"/>
+
+  <g transform="translate(125, 125)">
+    <g>
+      <ellipse cx="0" cy="-95" rx="24" ry="52" fill="url(#leafBlue)" transform="rotate(0)"/>
+      <path d="M 0 -92 L 0 -48" stroke="#ffd700" stroke-width="3"/>
+    </g>
+    <g transform="rotate(30)">
+      <ellipse cx="0" cy="-95" rx="24" ry="52" fill="url(#leafGreen)"/>
+      <path d="M 0 -92 L 0 -48" stroke="#ffd700" stroke-width="3"/>
+    </g>
+    <g transform="rotate(60)">
+      <ellipse cx="0" cy="-95" rx="24" ry="52" fill="url(#leafBlue)"/>
+      <path d="M 0 -92 L 0 -48" stroke="#ffd700" stroke-width="3"/>
+    </g>
+    <g transform="rotate(90)">
+      <ellipse cx="0" cy="-95" rx="24" ry="52" fill="url(#leafGreen)"/>
+      <path d="M 0 -92 L 0 -48" stroke="#ffd700" stroke-width="3"/>
+    </g>
+    <g transform="rotate(120)">
+      <ellipse cx="0" cy="-95" rx="24" ry="52" fill="url(#leafBlue)"/>
+      <path d="M 0 -92 L 0 -48" stroke="#ffd700" stroke-width="3"/>
+    </g>
+    <g transform="rotate(150)">
+      <ellipse cx="0" cy="-95" rx="24" ry="52" fill="url(#leafGreen)"/>
+      <path d="M 0 -92 L 0 -48" stroke="#ffd700" stroke-width="3"/>
+    </g>
+    <g transform="rotate(180)">
+      <ellipse cx="0" cy="-95" rx="24" ry="52" fill="url(#leafBlue)"/>
+      <path d="M 0 -92 L 0 -48" stroke="#ffd700" stroke-width="3"/>
+    </g>
+    <g transform="rotate(210)">
+      <ellipse cx="0" cy="-95" rx="24" ry="52" fill="url(#leafGreen)"/>
+      <path d="M 0 -92 L 0 -48" stroke="#ffd700" stroke-width="3"/>
+    </g>
+    <g transform="rotate(240)">
+      <ellipse cx="0" cy="-95" rx="24" ry="52" fill="url(#leafBlue)"/>
+      <path d="M 0 -92 L 0 -48" stroke="#ffd700" stroke-width="3"/>
+    </g>
+    <g transform="rotate(270)">
+      <ellipse cx="0" cy="-95" rx="24" ry="52" fill="url(#leafGreen)"/>
+      <path d="M 0 -92 L 0 -48" stroke="#ffd700" stroke-width="3"/>
+    </g>
+    <g transform="rotate(300)">
+      <ellipse cx="0" cy="-95" rx="24" ry="52" fill="url(#leafBlue)"/>
+      <path d="M 0 -92 L 0 -48" stroke="#ffd700" stroke-width="3"/>
+    </g>
+    <g transform="rotate(330)">
+      <ellipse cx="0" cy="-95" rx="24" ry="52" fill="url(#leafGreen)"/>
+      <path d="M 0 -92 L 0 -48" stroke="#ffd700" stroke-width="3"/>
+    </g>
+  </g>
+
+  <circle cx="125" cy="125" r="52" fill="#ffffff"/>
+  <circle cx="125" cy="125" r="48" fill="url(#dGold)"/>
+  <text x="125" y="145" text-anchor="middle" font-family="Georgia, serif" font-size="82" font-weight="700" fill="#ffffff">D</text>
+
+  <g transform="translate(205, 40) rotate(15)">
+    <path d="M 0 0 C 20 -10 10 90 0 120" stroke="#30660a" stroke-width="3" fill="none" opacity="0.8"/>
+    <path d="M 0 0 C 18 8 8 98 0 118" stroke="#51a33e" stroke-width="2" fill="none" opacity="0.7"/>
+    <path d="M 0 20 C 14 15 18 45 10 65" stroke="#68b53f" stroke-width="1.2" fill="none" opacity="0.7"/>
+    <path d="M 0 30 C 12 20 16 55 8 78" stroke="#6fb94b" stroke-width="1.2" fill="none" opacity="0.7"/>
+    <path d="M 0 40 C 10 24 14 60 6 87" stroke="#80c35f" stroke-width="1.2" fill="none" opacity="0.7"/>
+    <circle cx="0" cy="70" r="14" fill="#0d47a1"/>
+    <circle cx="0" cy="70" r="9" fill="#2196f3"/>
+    <circle cx="0" cy="70" r="5" fill="#ffffff"/>
+  </g>
+</svg>
