@@ -19,10 +19,10 @@ export async function createAuditLog(entry: AuditLogEntry): Promise<void> {
         action: entry.action,
         resource: entry.resource,
         resourceId: entry.resourceId,
-        before: entry.before ?? undefined,
-        after: entry.after ?? undefined,
-        ip: entry.ip,
-        userAgent: entry.userAgent,
+        before: entry.before ? JSON.parse(JSON.stringify(entry.before)) : null,
+        after: entry.after ? JSON.parse(JSON.stringify(entry.after)) : null,
+        ip: entry.ip ?? null,
+        userAgent: entry.userAgent ?? null,
       },
     });
   } catch (error) {
