@@ -7,8 +7,40 @@ export class LeaveService {
     return prisma.leaveType.findMany({ where: { isActive: true }, orderBy: { name: 'asc' } });
   }
 
+  async createLeaveType(data: { name: string, defaultBalance: number, carryForward?: boolean, maxCarryDays?: number }) {
+    return prisma.leaveType.create({ data });
+  }
+
+  async updateLeaveType(id: string, data: { name?: string, defaultBalance?: number, carryForward?: boolean, maxCarryDays?: number, isActive?: boolean }) {
+    return prisma.leaveType.update({ where: { id }, data });
+  }
+
+  async deleteLeaveType(id: string) {
+    return prisma.leaveType.update({ where: { id }, data: { isActive: false } });
+  }
+
   async getBalance(employeeId: string, year?: number) {
     const targetYear = year || new Date().getFullYear();
+    
+    // Auto-allocate missing leave types
+    const activeTypes = await prisma.leaveType.findMany({ where: { isActive: true } });
+    const currentBalances = await prisma.leaveBalance.findMany({
+      where: { employeeId, year: targetYear },
+    });
+
+    const missingTypes = activeTypes.filter(t => !currentBalances.some(b => b.leaveTypeId === t.id));
+    if (missingTypes.length > 0) {
+      await prisma.leaveBalance.createMany({
+        data: missingTypes.map(t => ({
+          employeeId,
+          leaveTypeId: t.id,
+          year: targetYear,
+          allocated: t.defaultBalance,
+          remaining: t.defaultBalance,
+        }))
+      });
+    }
+
     return prisma.leaveBalance.findMany({
       where: { employeeId, year: targetYear },
       include: { leaveType: { select: { name: true } } },
@@ -30,9 +62,25 @@ export class LeaveService {
 
     // Check balance
     const currentYear = new Date().getFullYear();
-    const balance = await prisma.leaveBalance.findFirst({
+    let balance = await prisma.leaveBalance.findFirst({
       where: { employeeId, leaveTypeId: data.leaveTypeId, year: currentYear },
     });
+
+    if (!balance) {
+      // Auto-allocate missing balance
+      const leaveType = await prisma.leaveType.findUnique({ where: { id: data.leaveTypeId } });
+      if (leaveType) {
+        balance = await prisma.leaveBalance.create({
+          data: {
+            employeeId,
+            leaveTypeId: leaveType.id,
+            year: currentYear,
+            allocated: leaveType.defaultBalance,
+            remaining: leaveType.defaultBalance,
+          }
+        });
+      }
+    }
 
     if (!balance || balance.remaining < duration) {
       throw new AppError(

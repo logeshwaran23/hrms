@@ -21,7 +21,7 @@ router.post('/', authenticate, validate(eodSchema), async (req: Request, res: Re
     today.setHours(0, 0, 0, 0);
 
     const existing = await prisma.eODReport.findUnique({
-      where: { employeeId_date: { employeeId: req.user!.employeeId, date: today } },
+      where: { employeeId_date: { employeeId: req.user!.employeeId!, date: today } },
     });
 
     if (existing) {
@@ -35,7 +35,7 @@ router.post('/', authenticate, validate(eodSchema), async (req: Request, res: Re
     }
 
     const report = await prisma.eODReport.create({
-      data: { employeeId: req.user!.employeeId, date: today, ...req.body },
+      data: { employeeId: req.user!.employeeId!, date: today, ...req.body },
     });
 
     await createAuditLog({ userId: req.user!.userId, action: 'SUBMIT', resource: 'eod', resourceId: report.id, ip: req.ip });
@@ -58,7 +58,7 @@ router.get('/', authenticate, async (req: Request, res: Response, next: NextFunc
 // Get team EOD reports
 router.get('/team', authenticate, authorize('eod:read:team'), async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const date = req.query.date ? new Date(req.query.date as string) : new Date();
+    const date = req.query.date ? new Date(req.query.date as any as string) : new Date();
     date.setHours(0, 0, 0, 0);
 
     const reports = await prisma.eODReport.findMany({

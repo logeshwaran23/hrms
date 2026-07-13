@@ -9,5 +9,6 @@ router.use(authenticate);
 router.get('/jobs', recruitmentController.getJobs);
 router.get('/candidates', recruitmentController.getCandidates);
 router.post('/candidates', recruitmentController.createCandidate);
+router.patch('/candidates/:id/status', recruitmentController.updateCandidateStatus);
 
 export default router;

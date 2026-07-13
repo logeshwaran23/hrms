@@ -67,7 +67,7 @@ export class AuthService {
     };
 
     const accessToken = signAccessToken(tokenPayload);
-    const refreshToken = signRefreshToken(user.id);
+    const refreshToken = signRefreshToken({ userId: user.id });
 
     // Store hashed refresh token
     const refreshTokenHash = await bcrypt.hash(refreshToken, 10);
@@ -153,7 +153,7 @@ export class AuthService {
 
     // Rotate refresh token
     const newAccessToken = signAccessToken(tokenPayload);
-    const newRefreshToken = signRefreshToken(user.id);
+    const newRefreshToken = signRefreshToken({ userId: user.id });
     const newRefreshHash = await bcrypt.hash(newRefreshToken, 10);
 
     await prisma.user.update({

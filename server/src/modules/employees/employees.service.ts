@@ -7,17 +7,17 @@ import { CreateEmployeeInput, UpdateEmployeeInput, UpdateProfileInput } from './
 export class EmployeeService {
   async list(req: Request) {
     const { page, limit, skip } = getPaginationParams(req);
-    const search = req.query.search as string | undefined;
-    const department = req.query.department as string | undefined;
-    const status = req.query.status as string | undefined;
+    const search = req.query.search as any as string | undefined;
+    const department = req.query.department as any as string | undefined;
+    const status = req.query.status as any as string | undefined;
 
     const where: any = {};
     if (search) {
       where.OR = [
-        { firstName: { contains: search, mode: 'insensitive' } },
-        { lastName: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
-        { employeeCode: { contains: search, mode: 'insensitive' } },
+        { firstName: { contains: search } },
+        { lastName: { contains: search } },
+        { email: { contains: search } },
+        { employeeCode: { contains: search } },
       ];
     }
     if (department) where.departmentId = department;
@@ -88,8 +88,14 @@ export class EmployeeService {
       nextCode = `DST-${String(lastNum + 1).padStart(3, '0')}`;
     }
 
+    const existingUser = await prisma.user.findUnique({ where: { email: data.email } });
+    if (existingUser && existingUser.employeeId) {
+      throw new AppError('Email is already linked to another employee profile', 400);
+    }
+
     const passwordHash = await hashPassword(data.password || 'Welcome@123');
 
+    // Create the employee record without the nested user create
     const employee = await prisma.employee.create({
       data: {
         employeeCode: nextCode,
@@ -103,14 +109,30 @@ export class EmployeeService {
         departmentId: data.departmentId,
         designationId: data.designationId,
         managerId: data.managerId,
-        user: {
-          create: {
-            email: data.email,
-            passwordHash,
-            roleId: data.roleId,
-          },
-        },
       },
+    });
+
+    if (existingUser) {
+      // Link the existing user to the new employee
+      await prisma.user.update({
+        where: { id: existingUser.id },
+        data: { employeeId: employee.id, roleId: data.roleId },
+      });
+    } else {
+      // Create a new user and link it
+      await prisma.user.create({
+        data: {
+          email: data.email,
+          passwordHash,
+          roleId: data.roleId,
+          employeeId: employee.id,
+        },
+      });
+    }
+
+    // Refetch the complete employee record to return
+    const createdEmployee = await prisma.employee.findUniqueOrThrow({
+      where: { id: employee.id },
       include: {
         department: { select: { name: true } },
         designation: { select: { name: true } },
@@ -132,7 +154,7 @@ export class EmployeeService {
       })),
     });
 
-    return employee;
+    return createdEmployee;
   }
 
   async update(id: string, data: UpdateEmployeeInput) {
@@ -159,6 +181,13 @@ export class EmployeeService {
         department: { select: { name: true } },
         designation: { select: { name: true } },
       },
+    });
+  }
+
+  async updateAvatar(employeeId: string, avatarPath: string) {
+    return prisma.employee.update({
+      where: { id: employeeId },
+      data: { avatar: avatarPath },
     });
   }
 

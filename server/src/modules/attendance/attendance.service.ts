@@ -1,33 +1,10 @@
 import { prisma } from '../../config';
 import { AppError } from '../../middleware';
 
-// IST timezone offset: +5 hours 30 minutes
-const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
-
-// Reliably format a UTC Date to IST time string (e.g., "03:56 PM")
-// Does NOT rely on Intl/ICU which may be unavailable on Render's Node.js
-function formatTimeIST(date: Date): string {
-  const istTime = new Date(date.getTime() + IST_OFFSET_MS);
-  let hours = istTime.getUTCHours();
-  const minutes = istTime.getUTCMinutes();
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  hours = hours % 12 || 12;
-  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
-}
-
-// Get today's date at midnight in IST (reliable, no ICU dependency)
-function getTodayIST(): Date {
-  const now = new Date();
-  const istNow = new Date(now.getTime() + IST_OFFSET_MS);
-  const year = istNow.getUTCFullYear();
-  const month = String(istNow.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(istNow.getUTCDate()).padStart(2, '0');
-  return new Date(`${year}-${month}-${day}T00:00:00.000+05:30`);
-}
-
 export class AttendanceService {
   async checkIn(employeeId: string) {
-    const today = getTodayIST();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     // Check if already checked in today
     const existing = await prisma.attendance.findUnique({
@@ -55,11 +32,12 @@ export class AttendanceService {
       },
     });
 
-    return { ...attendance, checkInTime: formatTimeIST(now) };
+    return { ...attendance, checkInTime: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) };
   }
 
   async checkOut(employeeId: string) {
-    const today = getTodayIST();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     const attendance = await prisma.attendance.findUnique({
       where: { employeeId_date: { employeeId, date: today } },
@@ -86,13 +64,14 @@ export class AttendanceService {
 
     return {
       ...updated,
-      checkOutTime: formatTimeIST(now),
+      checkOutTime: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
       formattedWorkHours: `${Math.floor(workHours)}h ${Math.round((workHours % 1) * 60)}m`,
     };
   }
 
   async getTodayStatus(employeeId: string) {
-    const today = getTodayIST();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     const attendance = await prisma.attendance.findUnique({
       where: { employeeId_date: { employeeId, date: today } },
@@ -109,8 +88,8 @@ export class AttendanceService {
 
     return {
       present: !!attendance.checkIn && !attendance.checkOut,
-      checkIn: attendance.checkIn ? formatTimeIST(attendance.checkIn) : null,
-      checkOut: attendance.checkOut ? formatTimeIST(attendance.checkOut) : null,
+      checkIn: attendance.checkIn?.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) || null,
+      checkOut: attendance.checkOut?.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) || null,
       workHours: Math.round(currentWorkHours * 100) / 100,
       status: attendance.status,
       completed: !!attendance.checkOut,
@@ -118,9 +97,8 @@ export class AttendanceService {
   }
 
   async getMyAttendance(employeeId: string, month?: number, year?: number) {
-    const nowIST = new Date(new Date().getTime() + IST_OFFSET_MS);
-    const targetYear = year || nowIST.getFullYear();
-    const targetMonth = month || nowIST.getMonth() + 1;
+    const targetYear = year || new Date().getFullYear();
+    const targetMonth = month || new Date().getMonth() + 1;
 
     const startDate = new Date(targetYear, targetMonth - 1, 1);
     const endDate = new Date(targetYear, targetMonth, 0);
@@ -135,7 +113,8 @@ export class AttendanceService {
   }
 
   async getTeamAttendance(managerId: string, date?: string) {
-    const targetDate = date ? new Date(date) : getTodayIST();
+    const targetDate = date ? new Date(date) : new Date();
+    targetDate.setHours(0, 0, 0, 0);
 
     const teamMembers = await prisma.employee.findMany({
       where: { managerId, status: 'ACTIVE' },
@@ -165,7 +144,8 @@ export class AttendanceService {
   }
 
   async getAllAttendance(date?: string) {
-    const targetDate = date ? new Date(date) : getTodayIST();
+    const targetDate = date ? new Date(date) : new Date();
+    targetDate.setHours(0, 0, 0, 0);
 
     const allMembers = await prisma.employee.findMany({
       where: { status: 'ACTIVE' },

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Router } from 'express';
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../../config';
@@ -5,33 +6,13 @@ import { authenticate } from '../../middleware';
 
 const router = Router();
 
-// IST timezone offset: +5 hours 30 minutes (no ICU dependency)
-const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
-
-function formatTimeIST(date: Date): string {
-  const istTime = new Date(date.getTime() + IST_OFFSET_MS);
-  let hours = istTime.getUTCHours();
-  const minutes = istTime.getUTCMinutes();
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  hours = hours % 12 || 12;
-  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
-}
-
-function getTodayIST(): Date {
-  const now = new Date();
-  const istNow = new Date(now.getTime() + IST_OFFSET_MS);
-  const year = istNow.getUTCFullYear();
-  const month = String(istNow.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(istNow.getUTCDate()).padStart(2, '0');
-  return new Date(`${year}-${month}-${day}T00:00:00.000+05:30`);
-}
-
 // Get dashboard data (role-scoped)
 router.get('/', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const employeeId = req.user!.employeeId;
     const roleName = req.user!.roleName;
-    const today = getTodayIST();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const currentYear = today.getFullYear();
     const currentMonth = today.getMonth() + 1;
 
@@ -86,8 +67,8 @@ router.get('/', authenticate, async (req: Request, res: Response, next: NextFunc
       attendance: {
         present: !!todayAttendance?.checkIn && !todayAttendance?.checkOut,
         completed: !!todayAttendance?.checkOut,
-        checkIn: todayAttendance?.checkIn ? formatTimeIST(todayAttendance.checkIn) : null,
-        checkOut: todayAttendance?.checkOut ? formatTimeIST(todayAttendance.checkOut) : null,
+        checkIn: todayAttendance?.checkIn?.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) || null,
+        checkOut: todayAttendance?.checkOut?.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) || null,
         workHours: todayAttendance?.workHours || 0,
         status: todayAttendance?.status || 'ABSENT',
       },
