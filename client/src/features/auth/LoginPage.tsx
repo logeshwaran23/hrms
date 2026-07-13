@@ -36,9 +36,12 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-hero">
-        <div className="hero-content">
-          <h1>HRMS Portal</h1>
-          <p>Your complete Employee Self-Service platform. Manage attendance, leave, payroll, and more — all in one place.</p>
+        <div className="hero-content" style={{ textAlign: 'center' }}>
+          <img src="/favicon.jpeg" alt="Damodara Smart Logo" style={{ width: '80px', height: '80px', borderRadius: '12px', margin: '0 auto 24px', display: 'block', objectFit: 'cover' }} />
+          <h1>
+            Damodara Smart<br />
+            HRMS Portal
+          </h1>
         </div>
       </div>
 
@@ -81,11 +84,6 @@ export default function LoginPage() {
 
             <div className="login-meta">
               <a href="#">Forgot password?</a>
-            </div>
-
-            <div className="demo-note">
-              <strong>Demo Accounts</strong> (password: Admin@123)<br />
-              admin@damodara.com · hr@damodara.com · manager@damodara.com · logesh@damodara.com
             </div>
           </form>
         </div>

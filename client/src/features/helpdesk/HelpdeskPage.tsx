@@ -24,7 +24,7 @@ export default function HelpdeskPage() {
 
   const loadTickets = async () => {
     try {
-      const res = await api.get('/helpdesk/tickets');
+      const res = await api.get('/helpdesk');
       setTickets(res.data.data || []);
     } catch {
       console.error('Failed to load tickets');
@@ -41,7 +41,7 @@ export default function HelpdeskPage() {
     setSubmitting(true);
     setMessage('');
     try {
-      await api.post('/helpdesk/tickets', form);
+      await api.post('/helpdesk', form);
       setMessage('Ticket submitted successfully!');
       setForm({ category: 'GENERAL', subject: '', description: '', priority: 'MEDIUM' });
       setShowForm(false);

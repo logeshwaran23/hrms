@@ -5,7 +5,12 @@ const JWT_SECRET = process.env.JWT_SECRET!;
 export interface TokenPayload {
   userId: string;
   role?: string;
+  roleId?: string;
   email?: string;
+  employeeId?: string;
+  permissions?: string[];
+  roleName?: string;
+  employee?: any;
 }
 
 export const signAccessToken = (payload: TokenPayload) => {

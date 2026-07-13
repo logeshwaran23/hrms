@@ -1,11 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import api from '../../lib/api';
+import { useAuthStore } from '../../store/authStore';
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<any>({});
   const [message, setMessage] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     api.get('/auth/me').then(r => { setProfile(r.data.user); setForm(r.data.user.employee || {}); });
@@ -15,8 +18,35 @@ export default function ProfilePage() {
     try {
       await api.patch('/employees/profile', { phone: form.phone, address: form.address, city: form.city, state: form.state, pincode: form.pincode, emergencyContact: form.emergencyContact, emergencyPhone: form.emergencyPhone, bankName: form.bankName, bankAccount: form.bankAccount, ifscCode: form.ifscCode });
       setMessage('Profile updated!'); setEditing(false);
-      api.get('/auth/me').then(r => setProfile(r.data.user));
+      api.get('/auth/me').then(r => {
+        setProfile(r.data.user);
+        useAuthStore.getState().updateUser(r.data.user);
+      });
     } catch { setMessage('Failed to update'); }
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    setIsUploading(true);
+    try {
+      const res = await api.post('/employees/profile/avatar', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setMessage('Profile photo updated!');
+      api.get('/auth/me').then(r => {
+        setProfile(r.data.user);
+        useAuthStore.getState().updateUser(r.data.user);
+      });
+    } catch {
+      setMessage('Failed to upload photo');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   if (!profile) return <div className="loading-page"><div className="spinner"></div></div>;
@@ -37,7 +67,34 @@ export default function ProfilePage() {
         <div className="card"><div className="card-header"><div><div className="eyebrow">Personal</div><div className="card-header-title">Basic Information</div></div></div>
           <div className="card-body">
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
-              <div className="topbar-avatar" style={{ width: 64, height: 64, fontSize: '1.5rem' }}>{emp?.firstName?.charAt(0)}</div>
+              <div 
+                className="topbar-avatar" 
+                style={{ 
+                  width: 64, height: 64, fontSize: '1.5rem', 
+                  cursor: 'pointer', position: 'relative', overflow: 'hidden'
+                }}
+                onClick={() => fileInputRef.current?.click()}
+                title="Click to upload new photo"
+              >
+                {isUploading ? (
+                  <div className="spinner" style={{ width: 24, height: 24, borderLeftColor: '#fff' }}></div>
+                ) : emp?.avatar ? (
+                  <img src={emp.avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  emp?.firstName?.charAt(0)
+                )}
+                {/* Hover overlay hint (optional, but good UX) */}
+                <div style={{ position: 'absolute', bottom: 0, right: 0, background: 'rgba(0,0,0,0.5)', width: '100%', textAlign: 'center', padding: '2px 0', fontSize: '10px', color: '#fff' }}>
+                  Edit
+                </div>
+              </div>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                style={{ display: 'none' }} 
+                accept="image/*" 
+                onChange={handleAvatarChange} 
+              />
               <div><div style={{ fontSize: '1.2rem', fontWeight: 700 }}>{emp?.firstName} {emp?.lastName}</div><div style={{ color: 'var(--text-secondary)' }}>{emp?.employeeCode}</div></div>
             </div>
             <Field label="Email" value={emp?.email} />
@@ -45,7 +102,7 @@ export default function ProfilePage() {
             <Field label="Designation" value={emp?.designation?.name} />
             <Field label="Date of Joining" value={emp?.dateOfJoining ? new Date(emp.dateOfJoining).toLocaleDateString() : null} />
             <Field label="Manager" value={emp?.manager?.name} />
-            <Field label="Role" value={profile.role} />
+            <Field label="Role" value={profile.role?.name} />
           </div>
         </div>
         <div className="card"><div className="card-header"><div><div className="eyebrow">Contact</div><div className="card-header-title">Contact & Bank Details</div></div></div>

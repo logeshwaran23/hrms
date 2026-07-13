@@ -134,7 +134,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="card-body">
-            {data?.leaveBalanceDetails.map((b) => (
+            {data?.leaveBalanceDetails?.map((b) => (
               <div key={b.type} className="leave-balance-card" style={{ marginBottom: 'var(--space-3)' }}>
                 <div>
                   <div className="leave-type-name">{b.type}</div>

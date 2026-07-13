@@ -26,7 +26,7 @@ export default function HelpdeskManagePage() {
   const loadTickets = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/helpdesk/tickets', { params: { status: filter === 'ALL' ? undefined : filter, all: true } });
+      const res = await api.get('/helpdesk', { params: { status: filter === 'ALL' ? undefined : filter, all: true } });
       setTickets(res.data.data || []);
     } catch {
       console.error('Failed to load tickets');
@@ -39,7 +39,7 @@ export default function HelpdeskManagePage() {
     if (!resolution.trim()) return;
     setProcessing(true);
     try {
-      await api.patch(`/helpdesk/tickets/${ticketId}/resolve`, { resolution });
+      await api.patch(`/helpdesk/${ticketId}/resolve`, { resolution });
       setResolveId(null);
       setResolution('');
       await loadTickets();

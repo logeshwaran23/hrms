@@ -10,6 +10,7 @@ interface AuthState {
   login: (user: User, accessToken: string, refreshToken: string) => void;
   logout: () => void;
   updateTokens: (accessToken: string, refreshToken: string) => void;
+  updateUser: (user: User) => void;
   hasPermission: (permission: string) => boolean;
   hasAnyPermission: (...permissions: string[]) => boolean;
 }
@@ -32,6 +33,10 @@ export const useAuthStore = create<AuthState>()(
 
       updateTokens: (accessToken, refreshToken) => {
         set({ accessToken, refreshToken });
+      },
+
+      updateUser: (user) => {
+        set({ user });
       },
 
       hasPermission: (permission: string) => {

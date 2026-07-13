@@ -25,7 +25,7 @@ export default function RecruitmentPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [newCandidate, setNewCandidate] = useState({ name: '', email: '', jobId: '' });
 
@@ -58,6 +58,15 @@ export default function RecruitmentPage() {
       loadData();
     } catch (err) {
       console.error('Failed to add candidate');
+    }
+  };
+
+  const handleStatusChange = async (id: string, status: string) => {
+    try {
+      await api.patch(`/recruitment/candidates/${id}/status`, { status });
+      setCandidates(prev => prev.map(c => c.id === id ? { ...c, status } : c));
+    } catch (err) {
+      console.error('Failed to update status');
     }
   };
 
@@ -137,7 +146,25 @@ export default function RecruitmentPage() {
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{candidate.email}</div>
                         </td>
                         <td>{job?.title || 'Unknown Role'}</td>
-                        <td><span className="badge badge-warning">{candidate.status}</span></td>
+                        <td>
+                          <select
+                            value={candidate.status}
+                            onChange={(e) => handleStatusChange(candidate.id, e.target.value)}
+                            className={`badge ${candidate.status === 'HIRED' ? 'badge-success' :
+                              candidate.status === 'REJECTED' ? 'badge-error' :
+                                candidate.status === 'SHORTLISTED' ? 'badge-info' :
+                                  'badge-warning'
+                              }`}
+                            style={{ padding: '4px 8px', fontSize: '0.8rem', width: 'auto', border: 'none', outline: 'none', cursor: 'pointer' }}
+                          >
+                            <option value="SCREENING">SCREENING</option>
+                            <option value="SHORTLISTED">SHORTLISTED</option>
+                            <option value="INTERVIEWING">INTERVIEWING</option>
+                            <option value="OFFERED">OFFERED</option>
+                            <option value="HIRED">HIRED</option>
+                            <option value="REJECTED">REJECTED</option>
+                          </select>
+                        </td>
                         <td>{new Date(candidate.appliedDate).toLocaleDateString()}</td>
                       </tr>
                     );

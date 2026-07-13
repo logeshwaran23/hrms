@@ -20,16 +20,29 @@ interface PayslipRecord {
   employee: { firstName: string; lastName: string; employeeCode: string };
 }
 
+interface PayslipRequest {
+  id: string;
+  month: number;
+  year: number;
+  purpose: string;
+  status: string;
+  remarks: string | null;
+  createdAt: string;
+  employee: { firstName: string; lastName: string; employeeCode: string };
+}
+
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 export default function PayrollPage() {
-  const [tab, setTab] = useState<'generate' | 'history'>('generate');
+  const [tab, setTab] = useState<'generate' | 'history' | 'requests'>('generate');
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
   const [processing, setProcessing] = useState(false);
   const [message, setMessage] = useState('');
   const [payslips, setPayslips] = useState<PayslipRecord[]>([]);
+  const [requests, setRequests] = useState<PayslipRequest[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [loadingRequests, setLoadingRequests] = useState(false);
 
   const handleGenerate = async () => {
     setProcessing(true);
@@ -47,7 +60,7 @@ export default function PayrollPage() {
   const loadHistory = async () => {
     setLoadingHistory(true);
     try {
-      const res = await api.get('/payroll/payslips', { params: { month, year } });
+      const res = await api.get('/payroll/payslips/all', { params: { month, year } });
       setPayslips(res.data.data || []);
     } catch {
       console.error('Failed to load payroll history');
@@ -56,20 +69,45 @@ export default function PayrollPage() {
     }
   };
 
+  const loadRequests = async () => {
+    setLoadingRequests(true);
+    try {
+      const res = await api.get('/payroll/requests');
+      setRequests(res.data.data || []);
+    } catch {
+      console.error('Failed to load requests');
+    } finally {
+      setLoadingRequests(false);
+    }
+  };
+
+  const handleUpdateRequest = async (id: string, status: string) => {
+    const remarks = prompt(`Enter remarks for ${status}:`, '');
+    if (remarks === null) return;
+    try {
+      await api.patch(`/payroll/requests/${id}`, { status, remarks });
+      loadRequests();
+    } catch (err) {
+      console.error('Failed to update request');
+    }
+  };
+
   useEffect(() => {
     if (tab === 'history') loadHistory();
+    if (tab === 'requests') loadRequests();
   }, [tab]);
 
   return (
     <div>
       <div className="page-header">
         <h1>Payroll Processing</h1>
-        <p>Generate and manage employee payslips</p>
+        <p>Generate payslips and manage employee requests</p>
       </div>
 
       <div className="tabs">
         <button className={`tab-btn ${tab === 'generate' ? 'active' : ''}`} onClick={() => setTab('generate')}>Generate Payroll</button>
         <button className={`tab-btn ${tab === 'history' ? 'active' : ''}`} onClick={() => setTab('history')}>Payroll History</button>
+        <button className={`tab-btn ${tab === 'requests' ? 'active' : ''}`} onClick={() => setTab('requests')}>Payslip Requests</button>
       </div>
 
       {tab === 'generate' && (
@@ -150,6 +188,67 @@ export default function PayrollPage() {
                       <td>₹{p.grossSalary.toLocaleString('en-IN')}</td>
                       <td style={{ fontWeight: 600 }}>₹{p.netSalary.toLocaleString('en-IN')}</td>
                       <td><span className={`badge ${p.status === 'PAID' ? 'badge-success' : p.status === 'PUBLISHED' ? 'badge-info' : 'badge-neutral'}`}>{p.status}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
+
+      {tab === 'requests' && (
+        <div className="card">
+          <div className="card-header">
+            <div>
+              <div className="eyebrow">Requests</div>
+              <div className="card-header-title">Official Payslip Requests</div>
+            </div>
+            <button className="btn btn-sm btn-secondary" onClick={loadRequests}>Refresh</button>
+          </div>
+          <div className="card-body" style={{ overflowX: 'auto' }}>
+            {loadingRequests ? (
+              <div className="loading-page" style={{ height: '30vh' }}><div className="spinner"></div></div>
+            ) : requests.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-state-icon">📄</div>
+                <h3>No requests pending</h3>
+                <p>Employees haven't requested any official payslips yet.</p>
+              </div>
+            ) : (
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Employee</th>
+                    <th>Period</th>
+                    <th>Purpose</th>
+                    <th>Requested On</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {requests.map((r) => (
+                    <tr key={r.id}>
+                      <td>{r.employee.firstName} {r.employee.lastName} <br/><small style={{color:'var(--text-secondary)'}}>{r.employee.employeeCode}</small></td>
+                      <td style={{ fontWeight: 600 }}>{MONTHS[r.month - 1]} {r.year}</td>
+                      <td>{r.purpose}</td>
+                      <td>{new Date(r.createdAt).toLocaleDateString()}</td>
+                      <td>
+                        <span className={`badge ${r.status === 'APPROVED' ? 'badge-success' : r.status === 'REJECTED' ? 'badge-error' : 'badge-warning'}`}>
+                          {r.status}
+                        </span>
+                      </td>
+                      <td>
+                        {r.status === 'PENDING' ? (
+                          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                            <button className="btn btn-sm btn-success" onClick={() => handleUpdateRequest(r.id, 'APPROVED')}>Approve</button>
+                            <button className="btn btn-sm btn-danger" onClick={() => handleUpdateRequest(r.id, 'REJECTED')}>Reject</button>
+                          </div>
+                        ) : (
+                          <span style={{color:'var(--text-secondary)', fontSize:'0.85rem'}}>{r.remarks || 'No remarks'}</span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

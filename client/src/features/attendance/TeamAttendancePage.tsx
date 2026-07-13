@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../../lib/api';
+import { useAuthStore } from '../../store/authStore';
 
 interface AttendanceRecord {
   id: string;
@@ -17,12 +18,15 @@ export default function TeamAttendancePage() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [summary, setSummary] = useState({ present: 0, absent: 0, total: 0 });
 
+  const { hasPermission } = useAuthStore();
+
   useEffect(() => { loadAttendance(); }, [selectedDate]);
 
   const loadAttendance = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/attendance', { params: { date: selectedDate, scope: 'team' } });
+      const endpoint = hasPermission('attendance:read:all') ? '/attendance/all' : '/attendance/team';
+      const res = await api.get(endpoint, { params: { date: selectedDate } });
       const data = res.data.data || [];
       setRecords(data);
       setSummary({

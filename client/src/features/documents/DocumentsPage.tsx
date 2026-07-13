@@ -41,7 +41,7 @@ export default function DocumentsPage() {
     try {
       const empId = user?.employee?.id;
       if (!empId) return;
-      const res = await api.get(`/documents/${empId}`);
+      const res = await api.get(`/documents`);
       setDocuments(res.data.data || []);
     } catch {
       console.error('Failed to load documents');

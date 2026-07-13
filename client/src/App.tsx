@@ -20,6 +20,8 @@ import ReportsPage from './features/reports/ReportsPage';
 import RolesPage from './features/admin/RolesPage';
 import AuditLogsPage from './features/admin/AuditLogsPage';
 import SettingsPage from './features/admin/SettingsPage';
+import UsersPage from './features/admin/UsersPage';
+import LeaveSettingsPage from './features/admin/LeaveSettingsPage';
 import ForbiddenPage from './features/errors/ForbiddenPage';
 import PerformancePage from './features/performance/PerformancePage';
 import RecruitmentPage from './features/recruitment/RecruitmentPage';
@@ -62,6 +64,8 @@ export default function App() {
           <Route path="/admin/roles" element={<RolesPage />} />
           <Route path="/admin/audit" element={<AuditLogsPage />} />
           <Route path="/admin/settings" element={<SettingsPage />} />
+          <Route path="/admin/leave-settings" element={<LeaveSettingsPage />} />
+          <Route path="/admin/users" element={<UsersPage />} />
 
           {/* Error */}
           <Route path="/403" element={<ForbiddenPage />} />
