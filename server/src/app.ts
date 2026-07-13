@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import path from 'path';
 import { env } from './config';
 import { errorHandler, apiLimiter } from './middleware';
 
@@ -20,12 +21,31 @@ import recruitmentRoutes from './modules/recruitment/recruitment.routes';
 
 const app = express();
 
+// ─── Trust Proxy (Render/Vercel) ─────────────────────────────
+// Required for rate-limiting to use real client IPs, not proxy IP
+app.set('trust proxy', 1);
+
 // ─── Security ────────────────────────────────────────────────
 app.use(helmet());
 app.use(cors({
-  origin: env.CLIENT_URL,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      env.CLIENT_URL,
+      'https://dhrms-w47g.vercel.app',
+      'http://localhost:5173',
+      'http://localhost:3000',
+    ].filter(Boolean);
+    
+    if (allowedOrigins.some(allowed => origin.startsWith(allowed))) {
+      return callback(null, true);
+    }
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
@@ -35,6 +55,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // ─── Rate Limiting ───────────────────────────────────────────
 app.use('/api', apiLimiter);
+
+// ─── Static Files ────────────────────────────────────────────
+app.use('/uploads', express.static(path.resolve(env.UPLOAD_DIR || './uploads')));
 
 // ─── Health Check ────────────────────────────────────────────
 app.get('/api/health', (_req, res) => {

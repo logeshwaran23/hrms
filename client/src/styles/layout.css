@@ -397,18 +397,152 @@
   flex-wrap: wrap;
 }
 
-/* ─── RESPONSIVE ──────────────────────────────────────────── */
+/* ─── HAMBURGER MENU BUTTON ────────────────────────────────── */
+.topbar-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.topbar-menu-btn:hover {
+  background: var(--bg-tertiary);
+}
+
+/* ─── MOBILE SIDEBAR OVERLAY ───────────────────────────────── */
+.sidebar-overlay {
+  display: none;
+}
+
+/* ─── RESPONSIVE — TABLET (≤1024px) ─────────────────────────── */
 @media (max-width: 1024px) {
   .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: var(--sidebar-width);
     transform: translateX(-100%);
+    transition: transform var(--transition-slow);
+    z-index: 200;
   }
+
   .sidebar.mobile-open {
     transform: translateX(0);
   }
+
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+    z-index: 150;
+    animation: fade-overlay 0.2s ease;
+  }
+
+  @keyframes fade-overlay {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
   .app-content {
     margin-left: 0 !important;
   }
+
   .topbar {
     left: 0 !important;
   }
+
+  .page-content {
+    padding: var(--space-4);
+  }
+
+  .page-header h1 {
+    font-size: 1.25rem;
+  }
 }
+
+/* ─── RESPONSIVE — MOBILE (≤768px) ────────────────────────── */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 280px;
+  }
+
+  .page-content {
+    padding: var(--space-3);
+  }
+
+  .topbar {
+    padding: 0 var(--space-3);
+  }
+
+  .topbar-breadcrumbs {
+    font-size: 0.78rem;
+    max-width: 45vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .topbar-user-info {
+    display: none;
+  }
+
+  .page-header {
+    margin-bottom: var(--space-4);
+  }
+
+  .page-header h1 {
+    font-size: 1.1rem;
+  }
+
+  .page-header p {
+    font-size: 0.8rem;
+  }
+
+  .page-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .user-dropdown {
+    right: var(--space-3);
+  }
+}
+
+/* ─── RESPONSIVE — SMALL PHONE (≤480px) ───────────────────── */
+@media (max-width: 480px) {
+  .sidebar {
+    width: 260px;
+  }
+
+  .page-content {
+    padding: var(--space-2);
+  }
+
+  .topbar {
+    height: 56px;
+    padding: 0 var(--space-2);
+  }
+
+  .page-content {
+    margin-top: 56px;
+  }
+
+  .topbar-menu-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .topbar-icon-btn {
+    width: 36px;
+    height: 36px;
+  }
+}
+

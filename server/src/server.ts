@@ -1,5 +1,5 @@
 import app from './app';
-import { env } from './config';
+import { env, prisma } from './config';
 
 const server = app.listen(env.PORT, () => {
   console.log(`\n🚀 HRMS Server running on http://localhost:${env.PORT}`);
@@ -8,8 +8,12 @@ const server = app.listen(env.PORT, () => {
 });
 
 // Graceful shutdown
-const shutdown = (signal: string) => {
+const shutdown = async (signal: string) => {
   console.log(`\n${signal} received. Shutting down gracefully...`);
+  
+  // Disconnect Prisma to release DB connections
+  await prisma.$disconnect().catch(console.error);
+  
   server.close(() => {
     console.log('Server closed.');
     process.exit(0);

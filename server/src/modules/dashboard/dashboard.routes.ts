@@ -5,13 +5,24 @@ import { authenticate } from '../../middleware';
 
 const router = Router();
 
+// IST timezone for all time formatting
+const IST_TIMEZONE = 'Asia/Kolkata';
+const TIME_FORMAT: Intl.DateTimeFormatOptions = {
+  hour: '2-digit', minute: '2-digit', hour12: true, timeZone: IST_TIMEZONE,
+};
+
+function getTodayIST(): Date {
+  const now = new Date();
+  const istDateStr = now.toLocaleDateString('en-CA', { timeZone: IST_TIMEZONE });
+  return new Date(istDateStr + 'T00:00:00.000+05:30');
+}
+
 // Get dashboard data (role-scoped)
 router.get('/', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const employeeId = req.user!.employeeId;
     const roleName = req.user!.roleName;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = getTodayIST();
     const currentYear = today.getFullYear();
     const currentMonth = today.getMonth() + 1;
 
@@ -66,8 +77,8 @@ router.get('/', authenticate, async (req: Request, res: Response, next: NextFunc
       attendance: {
         present: !!todayAttendance?.checkIn && !todayAttendance?.checkOut,
         completed: !!todayAttendance?.checkOut,
-        checkIn: todayAttendance?.checkIn?.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) || null,
-        checkOut: todayAttendance?.checkOut?.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) || null,
+        checkIn: todayAttendance?.checkIn?.toLocaleTimeString('en-US', TIME_FORMAT) || null,
+        checkOut: todayAttendance?.checkOut?.toLocaleTimeString('en-US', TIME_FORMAT) || null,
         workHours: todayAttendance?.workHours || 0,
         status: todayAttendance?.status || 'ABSENT',
       },
