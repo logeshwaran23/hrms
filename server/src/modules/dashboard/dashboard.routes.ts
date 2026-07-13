@@ -5,16 +5,25 @@ import { authenticate } from '../../middleware';
 
 const router = Router();
 
-// IST timezone for all time formatting
-const IST_TIMEZONE = 'Asia/Kolkata';
-const TIME_FORMAT: Intl.DateTimeFormatOptions = {
-  hour: '2-digit', minute: '2-digit', hour12: true, timeZone: IST_TIMEZONE,
-};
+// IST timezone offset: +5 hours 30 minutes (no ICU dependency)
+const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
+
+function formatTimeIST(date: Date): string {
+  const istTime = new Date(date.getTime() + IST_OFFSET_MS);
+  let hours = istTime.getUTCHours();
+  const minutes = istTime.getUTCMinutes();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12 || 12;
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+}
 
 function getTodayIST(): Date {
   const now = new Date();
-  const istDateStr = now.toLocaleDateString('en-CA', { timeZone: IST_TIMEZONE });
-  return new Date(istDateStr + 'T00:00:00.000+05:30');
+  const istNow = new Date(now.getTime() + IST_OFFSET_MS);
+  const year = istNow.getUTCFullYear();
+  const month = String(istNow.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(istNow.getUTCDate()).padStart(2, '0');
+  return new Date(`${year}-${month}-${day}T00:00:00.000+05:30`);
 }
 
 // Get dashboard data (role-scoped)
@@ -77,8 +86,8 @@ router.get('/', authenticate, async (req: Request, res: Response, next: NextFunc
       attendance: {
         present: !!todayAttendance?.checkIn && !todayAttendance?.checkOut,
         completed: !!todayAttendance?.checkOut,
-        checkIn: todayAttendance?.checkIn?.toLocaleTimeString('en-US', TIME_FORMAT) || null,
-        checkOut: todayAttendance?.checkOut?.toLocaleTimeString('en-US', TIME_FORMAT) || null,
+        checkIn: todayAttendance?.checkIn ? formatTimeIST(todayAttendance.checkIn) : null,
+        checkOut: todayAttendance?.checkOut ? formatTimeIST(todayAttendance.checkOut) : null,
         workHours: todayAttendance?.workHours || 0,
         status: todayAttendance?.status || 'ABSENT',
       },

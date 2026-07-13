@@ -1,21 +1,28 @@
 import { prisma } from '../../config';
 import { AppError } from '../../middleware';
 
-// IST timezone for all time formatting
-const IST_TIMEZONE = 'Asia/Kolkata';
-const TIME_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
-  hour: '2-digit',
-  minute: '2-digit',
-  hour12: true,
-  timeZone: IST_TIMEZONE,
-};
+// IST timezone offset: +5 hours 30 minutes
+const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
 
-// Get today's date at midnight in IST
+// Reliably format a UTC Date to IST time string (e.g., "03:56 PM")
+// Does NOT rely on Intl/ICU which may be unavailable on Render's Node.js
+function formatTimeIST(date: Date): string {
+  const istTime = new Date(date.getTime() + IST_OFFSET_MS);
+  let hours = istTime.getUTCHours();
+  const minutes = istTime.getUTCMinutes();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12 || 12;
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+}
+
+// Get today's date at midnight in IST (reliable, no ICU dependency)
 function getTodayIST(): Date {
   const now = new Date();
-  // Convert UTC to IST string, then parse back to get midnight IST
-  const istDateStr = now.toLocaleDateString('en-CA', { timeZone: IST_TIMEZONE }); // YYYY-MM-DD format
-  return new Date(istDateStr + 'T00:00:00.000+05:30');
+  const istNow = new Date(now.getTime() + IST_OFFSET_MS);
+  const year = istNow.getUTCFullYear();
+  const month = String(istNow.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(istNow.getUTCDate()).padStart(2, '0');
+  return new Date(`${year}-${month}-${day}T00:00:00.000+05:30`);
 }
 
 export class AttendanceService {
@@ -48,7 +55,7 @@ export class AttendanceService {
       },
     });
 
-    return { ...attendance, checkInTime: now.toLocaleTimeString('en-US', TIME_FORMAT_OPTIONS) };
+    return { ...attendance, checkInTime: formatTimeIST(now) };
   }
 
   async checkOut(employeeId: string) {
@@ -79,7 +86,7 @@ export class AttendanceService {
 
     return {
       ...updated,
-      checkOutTime: now.toLocaleTimeString('en-US', TIME_FORMAT_OPTIONS),
+      checkOutTime: formatTimeIST(now),
       formattedWorkHours: `${Math.floor(workHours)}h ${Math.round((workHours % 1) * 60)}m`,
     };
   }
@@ -102,8 +109,8 @@ export class AttendanceService {
 
     return {
       present: !!attendance.checkIn && !attendance.checkOut,
-      checkIn: attendance.checkIn?.toLocaleTimeString('en-US', TIME_FORMAT_OPTIONS) || null,
-      checkOut: attendance.checkOut?.toLocaleTimeString('en-US', TIME_FORMAT_OPTIONS) || null,
+      checkIn: attendance.checkIn ? formatTimeIST(attendance.checkIn) : null,
+      checkOut: attendance.checkOut ? formatTimeIST(attendance.checkOut) : null,
       workHours: Math.round(currentWorkHours * 100) / 100,
       status: attendance.status,
       completed: !!attendance.checkOut,
@@ -111,7 +118,7 @@ export class AttendanceService {
   }
 
   async getMyAttendance(employeeId: string, month?: number, year?: number) {
-    const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: IST_TIMEZONE }));
+    const nowIST = new Date(new Date().getTime() + IST_OFFSET_MS);
     const targetYear = year || nowIST.getFullYear();
     const targetMonth = month || nowIST.getMonth() + 1;
 
